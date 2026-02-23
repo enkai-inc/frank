@@ -104,6 +104,9 @@ fi
 # Priority: 1) GitHub App (auto-refreshing), 2) Personal Access Token
 GITHUB_AUTH_OK=false
 
+# Save PAT before App token setup may unset it - used as fallback for repos the App can't access
+GITHUB_PAT="${GITHUB_TOKEN:-}"
+
 # Clear any stale credentials that might interfere
 unset GH_TOKEN 2>/dev/null || true
 
@@ -242,6 +245,7 @@ git config --global --add safe.directory '*'
 PLUGINS_REPO="https://github.com/anthropics/claude-plugins-official.git"
 PLUGINS_CACHE="/opt/claude-plugins-official"
 PLUGINS_DIR="$HOME/.claude/plugins"
+PLUGINS_GIT_SHA="unknown"
 
 # List of plugins to install (internal plugins from plugins/ directory)
 INTERNAL_PLUGINS=(
@@ -291,6 +295,12 @@ install_plugins() {
     local project_path="$1"
     echo "=== Installing Claude Code Plugins ==="
     echo "Project path: $project_path"
+
+    # Skip if plugins repo wasn't cloned successfully
+    if [ ! -d "$PLUGINS_CACHE/.git" ]; then
+        echo "Plugins cache not available, skipping plugin installation"
+        return 0
+    fi
 
     local cache_base="$PLUGINS_DIR/cache/claude-plugins-official"
     local now
@@ -356,7 +366,8 @@ install_plugins() {
 }
 
 # Clone plugins repo early (must complete before Claude starts)
-clone_plugins_repo
+# Non-fatal: container should still start even if plugins repo is unavailable
+clone_plugins_repo || echo "WARNING: Continuing without plugins"
 
 # Sync community skills from GitHub repos (e.g., tegryan-ddo/pedro)
 source /usr/local/bin/install-community-skills.sh
@@ -524,7 +535,18 @@ setup_worktree_from_clone() {
             rm -rf "$REPO_BASE"
         fi
         echo "Cloning repository to $REPO_BASE..."
-        git clone "$repo_url" "$REPO_BASE"
+        # Disable hooks during clone - repo hooks may depend on tools not in container
+        # Fall back to PAT if GitHub App doesn't have access to this org/repo
+        if ! git clone -c core.hooksPath=/dev/null "$repo_url" "$REPO_BASE" 2>/tmp/clone-error.log; then
+            if [ -n "$GITHUB_PAT" ]; then
+                echo "Clone failed with App token, retrying with PAT..."
+                local pat_url="${repo_url/https:\/\/github.com\//https://x-access-token:${GITHUB_PAT}@github.com/}"
+                git clone -c core.hooksPath=/dev/null "$pat_url" "$REPO_BASE"
+            else
+                cat /tmp/clone-error.log >&2
+                return 1
+            fi
+        fi
     else
         # Check if existing repo matches the requested URL
         local existing_url
@@ -534,13 +556,26 @@ setup_worktree_from_clone() {
             echo "Removing old repo and worktrees..."
             rm -rf "$REPO_BASE" /workspace/worktrees/*
             echo "Cloning new repository to $REPO_BASE..."
-            git clone "$repo_url" "$REPO_BASE"
+            # Disable hooks and fall back to PAT if needed
+            if ! git clone -c core.hooksPath=/dev/null "$repo_url" "$REPO_BASE" 2>/tmp/clone-error.log; then
+                if [ -n "$GITHUB_PAT" ]; then
+                    echo "Clone failed with App token, retrying with PAT..."
+                    local pat_url="${repo_url/https:\/\/github.com\//https://x-access-token:${GITHUB_PAT}@github.com/}"
+                    git clone -c core.hooksPath=/dev/null "$pat_url" "$REPO_BASE"
+                else
+                    cat /tmp/clone-error.log >&2
+                    return 1
+                fi
+            fi
         else
             echo "Repository base exists, fetching and pulling updates..."
             git -C "$REPO_BASE" fetch --all 2>/dev/null || true
             git -C "$REPO_BASE" pull --ff-only 2>/dev/null || true
         fi
     fi
+
+    # Disable repo hooks permanently - they may depend on tools not in the container
+    git -C "$REPO_BASE" config core.hooksPath /dev/null 2>/dev/null || true
 
     # Set worktree path - keep under profile directory to avoid cross-profile issues
     WORKTREE_PATH="/workspace/repos/$CONTAINER_NAME/work"
@@ -669,7 +704,8 @@ fi
 copy_community_skills_to_workdir "$WORK_DIR"
 
 # Install and register plugins now that we know the working directory
-install_plugins "$WORK_DIR"
+# Non-fatal: container should still start even if plugin installation fails
+install_plugins "$WORK_DIR" || echo "WARNING: Plugin installation failed, continuing without plugins"
 
 # Common ttyd theme
 TTYD_THEME='{"background":"#1e1e1e","foreground":"#d4d4d4","cursor":"#d4d4d4","selectionBackground":"#264f78","black":"#1e1e1e","red":"#f44747","green":"#6a9955","yellow":"#dcdcaa","blue":"#569cd6","magenta":"#c586c0","cyan":"#4ec9b0","white":"#d4d4d4","brightBlack":"#808080","brightRed":"#f44747","brightGreen":"#6a9955","brightYellow":"#dcdcaa","brightBlue":"#569cd6","brightMagenta":"#c586c0","brightCyan":"#4ec9b0","brightWhite":"#ffffff"}'
