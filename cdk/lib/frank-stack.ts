@@ -34,22 +34,12 @@ export class FrankStack extends cdk.Stack {
   constructor(scope: Construct, id: string, props: FrankStackProps) {
     super(scope, id, props);
 
-    // VPC - create a new one for isolation
-    const vpc = new ec2.Vpc(this, 'FrankVpc', {
-      maxAzs: 2,
-      natGateways: 1,
-      subnetConfiguration: [
-        {
-          name: 'Public',
-          subnetType: ec2.SubnetType.PUBLIC,
-          cidrMask: 24,
-        },
-        {
-          name: 'Private',
-          subnetType: ec2.SubnetType.PRIVATE_WITH_EGRESS,
-          cidrMask: 24,
-        },
-      ],
+    // Use shared Enkai VPC (EnkaiNetworkingStack-dev)
+    const vpc = ec2.Vpc.fromVpcAttributes(this, 'SharedVpc', {
+      vpcId: 'vpc-050d8707aa211c8fd',
+      availabilityZones: ['us-east-1a', 'us-east-1b'],
+      publicSubnetIds: ['subnet-034dbf5587ff7cbbc', 'subnet-073f207bc51ab3251'],
+      privateSubnetIds: ['subnet-09d4294636ef06d45', 'subnet-08a270835b4e35553'],
     });
 
     // ECS Cluster
