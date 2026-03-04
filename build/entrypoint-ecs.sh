@@ -232,22 +232,22 @@ if [ "$GITHUB_AUTH_OK" = false ]; then
     echo "  Set GITHUB_APP_* vars for app auth, or GITHUB_TOKEN for PAT auth"
 fi
 
-# Start Pnyx credential sync daemon (handles per-agent API keys)
+# Start EnkaiRelay credential sync daemon (handles per-agent API keys)
 # The daemon will:
-#   1. Check for agent-specific secret: /frank/pnyx-api-key/{CONTAINER_NAME}
-#   2. Fall back to PNYX_API_KEY env var (backwards compatibility)
+#   1. Check for agent-specific secret: /frank/enkai-relay-api-key/{CONTAINER_NAME}
+#   2. Fall back to ENKAI_RELAY_API_KEY env var (backwards compatibility)
 #   3. Sync local changes back to agent-specific secret in Secrets Manager
-mkdir -p "$HOME/.config/pnyx"
-if [ -n "$PNYX_API_KEY" ]; then
-    echo "{\"api_key\":\"$PNYX_API_KEY\",\"api_url\":\"https://pnyx.digitaldevops.io\"}" > "$HOME/.config/pnyx/credentials.json"
-    chmod 600 "$HOME/.config/pnyx/credentials.json"
+mkdir -p "$HOME/.config/enkai-relay"
+if [ -n "$ENKAI_RELAY_API_KEY" ]; then
+    echo "{\"api_key\":\"$ENKAI_RELAY_API_KEY\",\"api_url\":\"https://enkai-relay.digitaldevops.io\"}" > "$HOME/.config/enkai-relay/credentials.json"
+    chmod 600 "$HOME/.config/enkai-relay/credentials.json"
 fi
-echo "Starting Pnyx credential sync daemon..."
-/usr/local/bin/pnyx-credential-sync.sh &
-export PNYX_API_URL="https://pnyx.digitaldevops.io"
-echo "Pnyx credential sync started for agent: ${CONTAINER_NAME:-unknown}"
+echo "Starting EnkaiRelay credential sync daemon..."
+/usr/local/bin/enkai-relay-credential-sync.sh &
+export ENKAI_RELAY_API_URL="https://enkai-relay.digitaldevops.io"
+echo "EnkaiRelay credential sync started for agent: ${CONTAINER_NAME:-unknown}"
 
-# Start Ollama for local LLM (used by Pnyx tick)
+# Start Ollama for local LLM (used by EnkaiRelay tick)
 # Store models on EFS so they persist across container restarts
 export OLLAMA_MODELS="/workspace/.ollama/models"
 mkdir -p "$OLLAMA_MODELS"
@@ -270,7 +270,7 @@ if command -v ollama >/dev/null 2>&1; then
         done
     ) &
 else
-    echo "WARNING: Ollama not installed - Pnyx tick AI features disabled"
+    echo "WARNING: Ollama not installed - EnkaiRelay tick AI features disabled"
 fi
 
 # Start analytics sync daemon (uploads local analytics to S3)
@@ -740,7 +740,7 @@ echo "Current directory: $(pwd)"
 export CLAUDE_PROJECT_DIR="$WORK_DIR"
 echo "CLAUDE_PROJECT_DIR=$CLAUDE_PROJECT_DIR"
 
-# Copy baked-in skills to working directory (e.g., Pnyx)
+# Copy baked-in skills to working directory (e.g., EnkaiRelay)
 if [ -d "/root/.claude/skills" ]; then
     mkdir -p "$WORK_DIR/.claude/skills"
     cp -r /root/.claude/skills/* "$WORK_DIR/.claude/skills/" 2>/dev/null || true

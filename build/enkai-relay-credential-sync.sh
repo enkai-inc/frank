@@ -1,23 +1,23 @@
 #!/bin/bash
-# pnyx-credential-sync.sh - Syncs Pnyx API keys across containers via Secrets Manager
-# Supports per-agent keys: /frank/pnyx-api-key/{agent-name}
+# enkai-relay-credential-sync.sh - Syncs EnkaiRelay API keys across containers via Secrets Manager
+# Supports per-agent keys: /frank/enkai-relay-api-key/{agent-name}
 # Runs as a background process; best-effort, failures don't affect container operation.
 
 set -o pipefail
 
-CRED_FILE="$HOME/.config/pnyx/credentials.json"
-LOG_FILE="/tmp/pnyx-credential-sync.log"
+CRED_FILE="$HOME/.config/enkai-relay/credentials.json"
+LOG_FILE="/tmp/enkai-relay-credential-sync.log"
 PULL_INTERVAL=60   # seconds between Secrets Manager pulls
 LOCAL_CHECK=5      # seconds between local file mtime checks
 REGION="${AWS_REGION:-us-east-1}"
-API_URL="https://pnyx.digitaldevops.io"
+API_URL="https://enkai-relay.digitaldevops.io"
 
 # Agent name from container name (e.g., "work", "enkai")
 AGENT_NAME="${CONTAINER_NAME:-}"
 AGENT_SECRET_ID=""
 
 if [ -n "$AGENT_NAME" ]; then
-    AGENT_SECRET_ID="/frank/pnyx-api-key/$AGENT_NAME"
+    AGENT_SECRET_ID="/frank/enkai-relay-api-key/$AGENT_NAME"
 fi
 
 log() {
@@ -26,11 +26,11 @@ log() {
 
 # Only run in ECS
 if [ -z "$ECS_CONTAINER_METADATA_URI_V4" ]; then
-    echo "Not running in ECS - Pnyx credential sync disabled" >> "$LOG_FILE"
+    echo "Not running in ECS - EnkaiRelay credential sync disabled" >> "$LOG_FILE"
     exit 0
 fi
 
-log "Pnyx credential sync started"
+log "EnkaiRelay credential sync started"
 log "  Agent: ${AGENT_NAME:-<none>}"
 log "  Agent secret: ${AGENT_SECRET_ID:-<none>}"
 log "  Pull interval: ${PULL_INTERVAL}s, local check: ${LOCAL_CHECK}s"
@@ -100,7 +100,7 @@ create_secret() {
     aws secretsmanager create-secret \
         --name "$secret_id" \
         --secret-string "$value" \
-        --description "Pnyx API key for agent: $AGENT_NAME" \
+        --description "EnkaiRelay API key for agent: $AGENT_NAME" \
         --region "$REGION" >/dev/null 2>&1
 }
 
@@ -192,14 +192,14 @@ initial_setup() {
         return 0
     fi
 
-    # Fall back to PNYX_API_KEY env var (for backwards compatibility)
-    if [ -n "$PNYX_API_KEY" ]; then
-        write_credentials "$PNYX_API_KEY"
-        log "Initial credentials set from PNYX_API_KEY env var"
+    # Fall back to ENKAI_RELAY_API_KEY env var (for backwards compatibility)
+    if [ -n "$ENKAI_RELAY_API_KEY" ]; then
+        write_credentials "$ENKAI_RELAY_API_KEY"
+        log "Initial credentials set from ENKAI_RELAY_API_KEY env var"
         return 0
     fi
 
-    log "No initial credentials found - agent can use /pnyx engage to register"
+    log "No initial credentials found - agent can use /enkai-relay engage to register"
     return 1
 }
 
@@ -215,7 +215,7 @@ while true; do
     sleep "$LOCAL_CHECK"
     SECONDS_SINCE_PULL=$((SECONDS_SINCE_PULL + LOCAL_CHECK))
 
-    # Check for local changes (agent updated credentials via /pnyx engage)
+    # Check for local changes (agent updated credentials via /enkai-relay engage)
     CURRENT_MTIME=$(get_file_mtime)
     if [ "$CURRENT_MTIME" != "$LAST_MTIME" ]; then
         CURRENT_HASH=$(get_file_hash)

@@ -337,10 +337,10 @@ func runStart(cmd *cobra.Command, args []string) error {
 		PrintVerbose("Anthropic API key configured")
 	}
 
-	// Setup Pnyx API key
-	if pnyxKey := GetPnyxToken(); pnyxKey != "" {
-		env = append(env, fmt.Sprintf("PNYX_API_KEY=%s", pnyxKey))
-		PrintVerbose("Pnyx API key configured")
+	// Setup EnkaiRelay API key
+	if enkai-relayKey := GetEnkaiRelayToken(); enkai-relayKey != "" {
+		env = append(env, fmt.Sprintf("ENKAI_RELAY_API_KEY=%s", enkai-relayKey))
+		PrintVerbose("EnkaiRelay API key configured")
 	}
 
 	// Mount SSH directory if requested (via flag or config)

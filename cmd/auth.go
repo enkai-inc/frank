@@ -61,28 +61,28 @@ Alternatively, set the CLAUDE_ACCESS_TOKEN environment variable.`,
 	RunE: runAuthClaude,
 }
 
-var authPnyxCmd = &cobra.Command{
-	Use:   "pnyx",
-	Short: "Configure Pnyx API key",
-	Long: `Configure the Pnyx API key for agent deliberation platform access.
+var authEnkaiRelayCmd = &cobra.Command{
+	Use:   "enkai-relay",
+	Short: "Configure EnkaiRelay API key",
+	Long: `Configure the EnkaiRelay API key for agent deliberation platform access.
 
-Pnyx is a deliberation platform for AI agents to share patterns,
+EnkaiRelay is a deliberation platform for AI agents to share patterns,
 discuss approaches, and build collective intelligence.
 
 To get your API key:
-  1. Visit https://pnyx.digitaldevops.io/agents
+  1. Visit https://enkai-relay.digitaldevops.io/agents
   2. Create an agent account
-  3. Generate an API key (shown once, format: pnyx_...)
+  3. Generate an API key (shown once, format: enkai-relay_...)
 
 The key will be stored locally and passed to all frank containers.
 For ECS containers, sync it to AWS Secrets Manager:
-  aws secretsmanager put-secret-value --secret-id /frank/pnyx-api-key --secret-string "pnyx_..."`,
-	RunE: runAuthPnyx,
+  aws secretsmanager put-secret-value --secret-id /frank/enkai-relay-api-key --secret-string "enkai-relay_..."`,
+	RunE: runAuthEnkaiRelay,
 }
 
 var (
-	authPnyxToken string
-	authPnyxClear bool
+	authEnkaiRelayToken string
+	authEnkaiRelayClear bool
 )
 
 var authPushCmd = &cobra.Command{
@@ -96,7 +96,7 @@ Only credentials that are configured locally will be pushed.
 Secrets updated:
   /frank/github-token       ← frank auth github
   /frank/claude-credentials ← ~/.claude/.credentials.json
-  /frank/pnyx-api-key       ← frank auth pnyx`,
+  /frank/enkai-relay-api-key       ← frank auth enkai-relay`,
 	RunE: runAuthPush,
 }
 
@@ -139,7 +139,7 @@ func init() {
 	authCmd.AddCommand(authClaudeCmd)
 	authCmd.AddCommand(authStatusCmd)
 	authCmd.AddCommand(authAWSCmd)
-	authCmd.AddCommand(authPnyxCmd)
+	authCmd.AddCommand(authEnkaiRelayCmd)
 	authCmd.AddCommand(authPushCmd)
 
 	authGitHubCmd.Flags().StringVarP(&authGitHubToken, "token", "t", "", "GitHub Personal Access Token")
@@ -151,8 +151,8 @@ func init() {
 	authAWSCmd.Flags().StringVar(&authAWSFormat, "format", "env", "Output format: env, export, json, powershell")
 	authAWSCmd.Flags().BoolVar(&authAWSLogin, "login", false, "Perform SSO login if credentials are expired")
 
-	authPnyxCmd.Flags().StringVarP(&authPnyxToken, "token", "t", "", "Pnyx API key")
-	authPnyxCmd.Flags().BoolVar(&authPnyxClear, "clear", false, "Clear stored Pnyx API key")
+	authEnkaiRelayCmd.Flags().StringVarP(&authEnkaiRelayToken, "token", "t", "", "EnkaiRelay API key")
+	authEnkaiRelayCmd.Flags().BoolVar(&authEnkaiRelayClear, "clear", false, "Clear stored EnkaiRelay API key")
 
 }
 
@@ -323,13 +323,13 @@ func runAuthStatus(cmd *cobra.Command, args []string) error {
 		fmt.Printf("%s\n", color.YellowString("not configured"))
 	}
 
-	// Check Pnyx
-	fmt.Print("Pnyx:   ")
-	if token := getStoredPnyxToken(); token != "" {
+	// Check EnkaiRelay
+	fmt.Print("EnkaiRelay:   ")
+	if token := getStoredEnkaiRelayToken(); token != "" {
 		masked := maskToken(token)
 		fmt.Printf("%s (stored: %s)\n", color.GreenString("configured"), masked)
-	} else if token := os.Getenv("PNYX_API_KEY"); token != "" {
-		fmt.Printf("%s (from PNYX_API_KEY env)\n", color.GreenString("configured"))
+	} else if token := os.Getenv("ENKAI_RELAY_API_KEY"); token != "" {
+		fmt.Printf("%s (from ENKAI_RELAY_API_KEY env)\n", color.GreenString("configured"))
 	} else {
 		fmt.Printf("%s\n", color.YellowString("not configured"))
 	}
@@ -493,23 +493,23 @@ func GetGHConfigDir() string {
 	return ""
 }
 
-func runAuthPnyx(cmd *cobra.Command, args []string) error {
-	tokenFile := getAuthTokenFile("pnyx")
+func runAuthEnkaiRelay(cmd *cobra.Command, args []string) error {
+	tokenFile := getAuthTokenFile("enkai-relay")
 
-	if authPnyxClear {
+	if authEnkaiRelayClear {
 		if err := os.Remove(tokenFile); err != nil && !os.IsNotExist(err) {
 			return fmt.Errorf("failed to clear API key: %w", err)
 		}
-		fmt.Println("Pnyx API key cleared.")
+		fmt.Println("EnkaiRelay API key cleared.")
 		return nil
 	}
 
-	token := authPnyxToken
+	token := authEnkaiRelayToken
 
 	// If no token provided, check env or prompt
 	if token == "" {
-		if envToken := os.Getenv("PNYX_API_KEY"); envToken != "" {
-			fmt.Println("PNYX_API_KEY environment variable is already set.")
+		if envToken := os.Getenv("ENKAI_RELAY_API_KEY"); envToken != "" {
+			fmt.Println("ENKAI_RELAY_API_KEY environment variable is already set.")
 			fmt.Print("Store it for future sessions? [y/N]: ")
 			reader := bufio.NewReader(os.Stdin)
 			response, _ := reader.ReadString('\n')
@@ -519,8 +519,8 @@ func runAuthPnyx(cmd *cobra.Command, args []string) error {
 				return nil
 			}
 		} else {
-			fmt.Println("Enter your Pnyx API key:")
-			fmt.Println("(Get one at https://pnyx.digitaldevops.io/agents)")
+			fmt.Println("Enter your EnkaiRelay API key:")
+			fmt.Println("(Get one at https://enkai-relay.digitaldevops.io/agents)")
 			fmt.Print("> ")
 			reader := bufio.NewReader(os.Stdin)
 			token, _ = reader.ReadString('\n')
@@ -533,8 +533,8 @@ func runAuthPnyx(cmd *cobra.Command, args []string) error {
 	}
 
 	// Validate token format
-	if !strings.HasPrefix(token, "pnyx_") {
-		fmt.Println(color.YellowString("Warning: API key doesn't match expected format (pnyx_...)."))
+	if !strings.HasPrefix(token, "enkai-relay_") {
+		fmt.Println(color.YellowString("Warning: API key doesn't match expected format (enkai-relay_...)."))
 	}
 
 	// Store token
@@ -546,29 +546,29 @@ func runAuthPnyx(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("failed to store API key: %w", err)
 	}
 
-	fmt.Printf("%s Pnyx API key stored successfully.\n", color.GreenString("✓"))
+	fmt.Printf("%s EnkaiRelay API key stored successfully.\n", color.GreenString("✓"))
 	fmt.Println("This key will be passed to all frank containers.")
 	fmt.Println()
 	fmt.Println("To sync to ECS containers, run:")
-	fmt.Println("  aws secretsmanager put-secret-value --secret-id /frank/pnyx-api-key --secret-string \"" + maskToken(token) + "\"")
+	fmt.Println("  aws secretsmanager put-secret-value --secret-id /frank/enkai-relay-api-key --secret-string \"" + maskToken(token) + "\"")
 	return nil
 }
 
-// getStoredPnyxToken reads the stored Pnyx API key
-func getStoredPnyxToken() string {
-	data, err := os.ReadFile(getAuthTokenFile("pnyx"))
+// getStoredEnkaiRelayToken reads the stored EnkaiRelay API key
+func getStoredEnkaiRelayToken() string {
+	data, err := os.ReadFile(getAuthTokenFile("enkai-relay"))
 	if err != nil {
 		return ""
 	}
 	return strings.TrimSpace(string(data))
 }
 
-// GetPnyxToken returns the Pnyx API key from stored or environment
-func GetPnyxToken() string {
-	if token := getStoredPnyxToken(); token != "" {
+// GetEnkaiRelayToken returns the EnkaiRelay API key from stored or environment
+func GetEnkaiRelayToken() string {
+	if token := getStoredEnkaiRelayToken(); token != "" {
 		return token
 	}
-	if token := os.Getenv("PNYX_API_KEY"); token != "" {
+	if token := os.Getenv("ENKAI_RELAY_API_KEY"); token != "" {
 		return token
 	}
 	return ""
@@ -616,11 +616,11 @@ func runAuthPush(cmd *cobra.Command, args []string) error {
 		})
 	}
 
-	// Pnyx API key
-	if token := GetPnyxToken(); token != "" {
+	// EnkaiRelay API key
+	if token := GetEnkaiRelayToken(); token != "" {
 		pushes = append(pushes, secretPush{
-			name:     "Pnyx",
-			secretID: "/frank/pnyx-api-key",
+			name:     "EnkaiRelay",
+			secretID: "/frank/enkai-relay-api-key",
 			value:    token,
 			source:   "frank auth",
 		})

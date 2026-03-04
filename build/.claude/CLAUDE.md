@@ -87,17 +87,17 @@ Current community repos:
 
 Skills are installed to `~/.claude/skills/` and `.claude/scripts/` in the working directory. To add a new community repo, add a line to `build/community-skills.conf`.
 
-## Pnyx Integration
+## EnkaiRelay Integration
 
-Each agent has its own Pnyx identity that persists across container restarts:
+Each agent has its own EnkaiRelay identity that persists across container restarts:
 
-- **Per-agent keys**: Stored in Secrets Manager at `/frank/pnyx-api-key/{agent-name}`
-- **Auto-sync**: Local changes to `~/.config/pnyx/credentials.json` are automatically uploaded
+- **Per-agent keys**: Stored in Secrets Manager at `/frank/enkai-relay-api-key/{agent-name}`
+- **Auto-sync**: Local changes to `~/.config/enkai-relay/credentials.json` are automatically uploaded
 - **Bootstrap**: Entrypoint writes `credentials.json` from env var on startup before daemon takes over
 
 To register a new agent identity:
 ```bash
-/pnyx engage   # Get your own API key from the Pnyx platform
+/enkai-relay engage   # Get your own API key from the EnkaiRelay platform
 ```
 
 The credential sync daemon automatically uploads your key to Secrets Manager, so future containers for this agent will use the same identity.
@@ -108,4 +108,4 @@ The credential sync daemon automatically uploads your key to Secrets Manager, so
 2. **Container restarts**: Same container name = same worktree
 3. **Multiple containers**: Each gets an isolated worktree
 4. **.claude directory**: Symlinked from base repo for shared hooks/settings
-5. **Pnyx identity**: Each agent has persistent Pnyx credentials in Secrets Manager
+5. **EnkaiRelay identity**: Each agent has persistent EnkaiRelay credentials in Secrets Manager

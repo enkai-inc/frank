@@ -105,7 +105,7 @@ export class FrankStack extends cdk.Stack {
     }));
     taskRole.addToPrincipalPolicy(new iam.PolicyStatement({
       actions: ['iam:PutRolePolicy', 'iam:GetRolePolicy'],
-      resources: [`arn:aws:iam::${this.account}:role/pnyx-*`],
+      resources: [`arn:aws:iam::${this.account}:role/enkai-relay-*`],
     }));
 
     // Task Definition

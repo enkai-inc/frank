@@ -486,8 +486,8 @@
             gap: 8px;
         }
 
-        /* Pnyx Tick Section */
-        .pnyx-tick-section {
+        /* EnkaiRelay Tick Section */
+        .enkai-relay-tick-section {
             margin-top: 16px;
             padding-top: 16px;
             border-top: 1px solid #3c3c3c;
@@ -529,14 +529,14 @@
             cursor: not-allowed;
         }
 
-        .pnyx-tick-controls {
+        .enkai-relay-tick-controls {
             display: flex;
             gap: 8px;
             margin-top: 8px;
             align-items: center;
         }
 
-        .pnyx-tick-btn {
+        .enkai-relay-tick-btn {
             flex: 1;
             padding: 8px 12px;
             background: #1e3a1e;
@@ -552,22 +552,22 @@
             transition: all 0.2s;
         }
 
-        .pnyx-tick-btn:hover {
+        .enkai-relay-tick-btn:hover {
             background: #2d5a2d;
             border-color: #6a9955;
         }
 
-        .pnyx-tick-btn.active {
+        .enkai-relay-tick-btn.active {
             background: #3a1e1e;
             color: #f44747;
             border-color: #f44747;
         }
 
-        .pnyx-tick-btn.active:hover {
+        .enkai-relay-tick-btn.active:hover {
             background: #5a2d2d;
         }
 
-        .pnyx-tick-btn.active .tick-icon {
+        .enkai-relay-tick-btn.active .tick-icon {
             animation: pulse-tick 1.5s ease-in-out infinite;
         }
 
@@ -576,7 +576,7 @@
             50% { opacity: 0.5; }
         }
 
-        .pnyx-tick-interval {
+        .enkai-relay-tick-interval {
             background: #2d2d2d;
             border: 1px solid #3c3c3c;
             color: #d4d4d4;
@@ -587,16 +587,16 @@
             outline: none;
         }
 
-        .pnyx-tick-interval:focus {
+        .enkai-relay-tick-interval:focus {
             border-color: #0e639c;
         }
 
-        .pnyx-tick-interval:disabled {
+        .enkai-relay-tick-interval:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
 
-        .pnyx-tick-now-btn {
+        .enkai-relay-tick-now-btn {
             padding: 6px 10px;
             background: #0e639c;
             border: 1px solid #0e639c;
@@ -607,16 +607,16 @@
             transition: all 0.2s;
         }
 
-        .pnyx-tick-now-btn:hover {
+        .enkai-relay-tick-now-btn:hover {
             background: #1177bb;
         }
 
-        .pnyx-tick-now-btn:disabled {
+        .enkai-relay-tick-now-btn:disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
 
-        .pnyx-tick-status {
+        .enkai-relay-tick-status {
             margin-top: 10px;
             font-size: 11px;
         }
@@ -644,7 +644,7 @@
             color: #808080;
         }
 
-        .pnyx-tick-no-creds {
+        .enkai-relay-tick-no-creds {
             margin-top: 8px;
             padding: 8px;
             background: #3d3d00;
@@ -657,7 +657,7 @@
             gap: 6px;
         }
 
-        .pnyx-tick-no-creds .warning-icon {
+        .enkai-relay-tick-no-creds .warning-icon {
             font-size: 14px;
         }
 
@@ -1594,15 +1594,15 @@
                     </ul>
                 </div>
 
-                <!-- Pnyx Tick Section -->
-                <div class="context-section pnyx-tick-section">
-                    <div class="context-section-title">Pnyx Tick</div>
-                    <div class="pnyx-tick-controls">
-                        <button class="pnyx-tick-btn" id="pnyx-tick-toggle" title="Start/Stop automatic Pnyx participation">
+                <!-- EnkaiRelay Tick Section -->
+                <div class="context-section enkai-relay-tick-section">
+                    <div class="context-section-title">EnkaiRelay Tick</div>
+                    <div class="enkai-relay-tick-controls">
+                        <button class="enkai-relay-tick-btn" id="enkai-relay-tick-toggle" title="Start/Stop automatic EnkaiRelay participation">
                             <span class="tick-icon">&#x25B6;</span>
                             <span class="tick-label">Start</span>
                         </button>
-                        <select id="pnyx-tick-interval" class="pnyx-tick-interval" title="Tick interval">
+                        <select id="enkai-relay-tick-interval" class="enkai-relay-tick-interval" title="Tick interval">
                             <option value="300">5m</option>
                             <option value="900">15m</option>
                             <option value="1800" selected>30m</option>
@@ -1610,11 +1610,11 @@
                             <option value="7200">2h</option>
                             <option value="14400">4h</option>
                         </select>
-                        <button class="pnyx-tick-now-btn" id="pnyx-tick-now" title="Run tick now">
+                        <button class="enkai-relay-tick-now-btn" id="enkai-relay-tick-now" title="Run tick now">
                             Now
                         </button>
                     </div>
-                    <div class="pnyx-tick-status" id="pnyx-tick-status">
+                    <div class="enkai-relay-tick-status" id="enkai-relay-tick-status">
                         <div class="tick-status-row">
                             <span class="tick-status-label">Status:</span>
                             <span class="tick-status-value" id="tick-status-text">Stopped</span>
@@ -1632,32 +1632,32 @@
                             <span class="tick-status-value" id="tick-last-result">-</span>
                         </div>
                     </div>
-                    <div class="pnyx-tick-no-creds" id="pnyx-no-creds" style="display: none;">
+                    <div class="enkai-relay-tick-no-creds" id="enkai-relay-no-creds" style="display: none;">
                         <span class="warning-icon">&#x26A0;</span>
-                        No Pnyx credentials found
+                        No EnkaiRelay credentials found
                     </div>
                 </div>
 
                 <!-- GitHub Monitor Section -->
                 <div class="context-section gh-monitor-section">
                     <div class="context-section-title">GitHub Monitor</div>
-                    <div class="pnyx-tick-controls">
-                        <button class="pnyx-tick-btn" id="gh-monitor-panel-toggle" title="Start/Stop GitHub issue monitoring">
+                    <div class="enkai-relay-tick-controls">
+                        <button class="enkai-relay-tick-btn" id="gh-monitor-panel-toggle" title="Start/Stop GitHub issue monitoring">
                             <span class="tick-icon">&#x25B6;</span>
                             <span class="tick-label">Start</span>
                         </button>
-                        <select id="gh-monitor-interval" class="pnyx-tick-interval" title="Check interval">
+                        <select id="gh-monitor-interval" class="enkai-relay-tick-interval" title="Check interval">
                             <option value="30">30s</option>
                             <option value="60">1m</option>
                             <option value="120" selected>2m</option>
                             <option value="300">5m</option>
                             <option value="600">10m</option>
                         </select>
-                        <button class="pnyx-tick-now-btn" id="gh-monitor-now" title="Check now">
+                        <button class="enkai-relay-tick-now-btn" id="gh-monitor-now" title="Check now">
                             Now
                         </button>
                     </div>
-                    <div class="pnyx-tick-status" id="gh-monitor-status">
+                    <div class="enkai-relay-tick-status" id="gh-monitor-status">
                         <div class="tick-status-row">
                             <span class="tick-status-label">Status:</span>
                             <span class="tick-status-value" id="gh-status-text">Stopped</span>
@@ -2769,19 +2769,19 @@
         })();
 
         // =============================================
-        // Pnyx Tick Controls
+        // EnkaiRelay Tick Controls
         // =============================================
         (function() {
-            const toggleBtn = document.getElementById('pnyx-tick-toggle');
-            const intervalSelect = document.getElementById('pnyx-tick-interval');
-            const nowBtn = document.getElementById('pnyx-tick-now');
+            const toggleBtn = document.getElementById('enkai-relay-tick-toggle');
+            const intervalSelect = document.getElementById('enkai-relay-tick-interval');
+            const nowBtn = document.getElementById('enkai-relay-tick-now');
             const statusText = document.getElementById('tick-status-text');
             const claudeState = document.getElementById('tick-claude-state');
             const nextRow = document.getElementById('tick-next-row');
             const nextTime = document.getElementById('tick-next-time');
             const lastRow = document.getElementById('tick-last-row');
             const lastResult = document.getElementById('tick-last-result');
-            const noCreds = document.getElementById('pnyx-no-creds');
+            const noCreds = document.getElementById('enkai-relay-no-creds');
 
             let isRunning = false;
             let pollInterval = null;
@@ -2798,7 +2798,7 @@
                 if (!result) return '-';
                 if (result.error) return `Error: ${result.error.substring(0, 40)}`;
                 if (result.skipped) return `Skipped: ${result.reason || 'busy'}`;
-                if (result.sent) return `Sent ${result.prompt || '/pnyx'} to Claude`;
+                if (result.sent) return `Sent ${result.prompt || '/enkai-relay'} to Claude`;
                 if (result.sent === false && !result.skipped) return 'Failed to send';
                 // Legacy format (Ollama-based)
                 const actions = result.actions || [];
