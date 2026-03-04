@@ -94,7 +94,7 @@ ENKAI_RELAY_API_URL = os.environ.get('ENKAI_RELAY_API_URL', 'https://enkai-relay
 ENKAI_RELAY_CREDENTIALS_FILE = os.path.expanduser('~/.config/enkai-relay/credentials.json')
 
 # EnkaiRelay tick state
-enkai-relay_tick_state = {
+enkai_relay_tick_state = {
     'enabled': False,
     'interval_seconds': 1800,  # 30 minutes default
     'last_tick': None,
@@ -103,7 +103,7 @@ enkai-relay_tick_state = {
     'timer_thread': None,
     'stop_event': None,
 }
-enkai-relay_tick_lock = threading.Lock()
+enkai_relay_tick_lock = threading.Lock()
 
 # GitHub issue monitor state
 GH_MONITOR_STATE_FILE = '/tmp/gh-monitor-state.json'
@@ -325,7 +325,7 @@ def get_claude_state(session='frank-claude'):
 
 ENKAI_RELAY_TICK_PROMPT = '/enkai-relay'  # The skill command to send to Claude
 
-def get_enkai-relay_credentials():
+def get_enkai_relay_credentials():
     """Get EnkaiRelay API credentials from file or environment."""
     # Try environment first
     api_key = os.environ.get('ENKAI_RELAY_API_KEY')
@@ -347,7 +347,7 @@ def get_enkai-relay_credentials():
     return None
 
 
-def run_enkai-relay_tick():
+def run_enkai_relay_tick():
     """
     Run a single EnkaiRelay tick cycle:
     1. Check if Claude is idle and prompt textbox is empty
@@ -357,7 +357,7 @@ def run_enkai-relay_tick():
     log("Running EnkaiRelay tick...")
 
     # Check credentials first
-    creds = get_enkai-relay_credentials()
+    creds = get_enkai_relay_credentials()
     if not creds:
         return {'error': 'No EnkaiRelay credentials configured', 'sent': False}
 
@@ -404,7 +404,7 @@ def run_enkai-relay_tick():
     return result
 
 
-def enkai-relay_tick_timer_loop(stop_event, interval_seconds):
+def enkai_relay_tick_timer_loop(stop_event, interval_seconds):
     """Background timer loop for EnkaiRelay tick."""
     while not stop_event.is_set():
         # Wait for interval or stop signal
@@ -413,44 +413,44 @@ def enkai-relay_tick_timer_loop(stop_event, interval_seconds):
 
         # Run tick
         try:
-            result = run_enkai-relay_tick()
-            with enkai-relay_tick_lock:
-                enkai-relay_tick_state['last_tick'] = datetime.now().isoformat()
-                enkai-relay_tick_state['last_result'] = result
-                enkai-relay_tick_state['next_tick'] = (
-                    datetime.now().timestamp() + enkai-relay_tick_state['interval_seconds']
+            result = run_enkai_relay_tick()
+            with enkai_relay_tick_lock:
+                enkai_relay_tick_state['last_tick'] = datetime.now().isoformat()
+                enkai_relay_tick_state['last_result'] = result
+                enkai_relay_tick_state['next_tick'] = (
+                    datetime.now().timestamp() + enkai_relay_tick_state['interval_seconds']
                 )
         except Exception as e:
             log(f"EnkaiRelay tick error: {e}")
-            with enkai-relay_tick_lock:
-                enkai-relay_tick_state['last_result'] = {'error': str(e), 'actions': []}
+            with enkai_relay_tick_lock:
+                enkai_relay_tick_state['last_result'] = {'error': str(e), 'actions': []}
 
     log("EnkaiRelay tick timer stopped")
 
 
-def start_enkai-relay_tick_timer(interval_seconds=1800):
+def start_enkai_relay_tick_timer(interval_seconds=1800):
     """Start the EnkaiRelay tick background timer."""
-    global enkai-relay_tick_state
+    global enkai_relay_tick_state
 
-    with enkai-relay_tick_lock:
+    with enkai_relay_tick_lock:
         # Stop existing timer if running
-        if enkai-relay_tick_state['timer_thread'] and enkai-relay_tick_state['timer_thread'].is_alive():
-            enkai-relay_tick_state['stop_event'].set()
-            enkai-relay_tick_state['timer_thread'].join(timeout=5)
+        if enkai_relay_tick_state['timer_thread'] and enkai_relay_tick_state['timer_thread'].is_alive():
+            enkai_relay_tick_state['stop_event'].set()
+            enkai_relay_tick_state['timer_thread'].join(timeout=5)
 
         # Create new timer
         stop_event = threading.Event()
         timer_thread = threading.Thread(
-            target=enkai-relay_tick_timer_loop,
+            target=enkai_relay_tick_timer_loop,
             args=(stop_event, interval_seconds),
             daemon=True
         )
 
-        enkai-relay_tick_state['enabled'] = True
-        enkai-relay_tick_state['interval_seconds'] = interval_seconds
-        enkai-relay_tick_state['stop_event'] = stop_event
-        enkai-relay_tick_state['timer_thread'] = timer_thread
-        enkai-relay_tick_state['next_tick'] = datetime.now().timestamp() + interval_seconds
+        enkai_relay_tick_state['enabled'] = True
+        enkai_relay_tick_state['interval_seconds'] = interval_seconds
+        enkai_relay_tick_state['stop_event'] = stop_event
+        enkai_relay_tick_state['timer_thread'] = timer_thread
+        enkai_relay_tick_state['next_tick'] = datetime.now().timestamp() + interval_seconds
 
         timer_thread.start()
         log(f"EnkaiRelay tick timer started (interval: {interval_seconds}s)")
@@ -458,40 +458,40 @@ def start_enkai-relay_tick_timer(interval_seconds=1800):
     return True
 
 
-def stop_enkai-relay_tick_timer():
+def stop_enkai_relay_tick_timer():
     """Stop the EnkaiRelay tick background timer."""
-    global enkai-relay_tick_state
+    global enkai_relay_tick_state
 
-    with enkai-relay_tick_lock:
-        if enkai-relay_tick_state['stop_event']:
-            enkai-relay_tick_state['stop_event'].set()
+    with enkai_relay_tick_lock:
+        if enkai_relay_tick_state['stop_event']:
+            enkai_relay_tick_state['stop_event'].set()
 
-        if enkai-relay_tick_state['timer_thread']:
-            enkai-relay_tick_state['timer_thread'].join(timeout=5)
+        if enkai_relay_tick_state['timer_thread']:
+            enkai_relay_tick_state['timer_thread'].join(timeout=5)
 
-        enkai-relay_tick_state['enabled'] = False
-        enkai-relay_tick_state['timer_thread'] = None
-        enkai-relay_tick_state['stop_event'] = None
-        enkai-relay_tick_state['next_tick'] = None
+        enkai_relay_tick_state['enabled'] = False
+        enkai_relay_tick_state['timer_thread'] = None
+        enkai_relay_tick_state['stop_event'] = None
+        enkai_relay_tick_state['next_tick'] = None
 
         log("EnkaiRelay tick timer stopped")
 
     return True
 
 
-def get_enkai-relay_tick_status():
+def get_enkai_relay_tick_status():
     """Get the current EnkaiRelay tick timer status."""
-    with enkai-relay_tick_lock:
+    with enkai_relay_tick_lock:
         status = {
-            'enabled': enkai-relay_tick_state['enabled'],
-            'interval_seconds': enkai-relay_tick_state['interval_seconds'],
-            'last_tick': enkai-relay_tick_state['last_tick'],
-            'last_result': enkai-relay_tick_state['last_result'],
-            'has_credentials': get_enkai-relay_credentials() is not None,
+            'enabled': enkai_relay_tick_state['enabled'],
+            'interval_seconds': enkai_relay_tick_state['interval_seconds'],
+            'last_tick': enkai_relay_tick_state['last_tick'],
+            'last_result': enkai_relay_tick_state['last_result'],
+            'has_credentials': get_enkai_relay_credentials() is not None,
         }
 
-        if enkai-relay_tick_state['next_tick']:
-            remaining = enkai-relay_tick_state['next_tick'] - datetime.now().timestamp()
+        if enkai_relay_tick_state['next_tick']:
+            remaining = enkai_relay_tick_state['next_tick'] - datetime.now().timestamp()
             status['next_tick_in_seconds'] = max(0, int(remaining))
         else:
             status['next_tick_in_seconds'] = None
@@ -1441,7 +1441,7 @@ class StatusHandler(BaseHTTPRequestHandler):
                 self.send_header('Content-Type', 'application/json')
                 self.send_header('Access-Control-Allow-Origin', '*')
                 self.end_headers()
-                status = get_enkai-relay_tick_status()
+                status = get_enkai_relay_tick_status()
                 status['claude_state'] = get_claude_state()
                 self.wfile.write(json.dumps(status).encode())
                 return
@@ -1550,7 +1550,7 @@ class StatusHandler(BaseHTTPRequestHandler):
                     # Validate interval (minimum 60 seconds, maximum 4 hours)
                     interval = max(60, min(14400, int(interval)))
 
-                    start_enkai-relay_tick_timer(interval)
+                    start_enkai_relay_tick_timer(interval)
 
                     self.send_response(200)
                     self.send_header('Content-Type', 'application/json')
@@ -1559,7 +1559,7 @@ class StatusHandler(BaseHTTPRequestHandler):
                     self.wfile.write(json.dumps({
                         'success': True,
                         'message': f'EnkaiRelay tick timer started ({interval}s interval)',
-                        'status': get_enkai-relay_tick_status()
+                        'status': get_enkai_relay_tick_status()
                     }).encode())
                 except Exception as e:
                     self.send_response(500)
@@ -1571,7 +1571,7 @@ class StatusHandler(BaseHTTPRequestHandler):
 
             elif path == '/status/tick/stop':
                 # Stop EnkaiRelay tick timer
-                stop_enkai-relay_tick_timer()
+                stop_enkai_relay_tick_timer()
 
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
@@ -1580,17 +1580,17 @@ class StatusHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps({
                     'success': True,
                     'message': 'EnkaiRelay tick timer stopped',
-                    'status': get_enkai-relay_tick_status()
+                    'status': get_enkai_relay_tick_status()
                 }).encode())
                 return
 
             elif path == '/status/tick/now':
                 # Run EnkaiRelay tick immediately
                 def run_tick_background():
-                    result = run_enkai-relay_tick()
-                    with enkai-relay_tick_lock:
-                        enkai-relay_tick_state['last_tick'] = datetime.now().isoformat()
-                        enkai-relay_tick_state['last_result'] = result
+                    result = run_enkai_relay_tick()
+                    with enkai_relay_tick_lock:
+                        enkai_relay_tick_state['last_tick'] = datetime.now().isoformat()
+                        enkai_relay_tick_state['last_result'] = result
 
                 # Run in background thread to not block the response
                 thread = threading.Thread(target=run_tick_background, daemon=True)
