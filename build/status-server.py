@@ -89,12 +89,12 @@ VERSION_CACHE = {
 }
 VERSION_CHECK_INTERVAL = 300  # Check for updates every 5 minutes
 
-# Pnyx configuration
-PNYX_API_URL = os.environ.get('PNYX_API_URL', 'https://pnyx.digitaldevops.io')
-PNYX_CREDENTIALS_FILE = os.path.expanduser('~/.config/pnyx/credentials.json')
+# EnkaiRelay configuration
+ENKAI_RELAY_API_URL = os.environ.get('ENKAI_RELAY_API_URL', 'https://enkai-relay.digitaldevops.io')
+ENKAI_RELAY_CREDENTIALS_FILE = os.path.expanduser('~/.config/enkai-relay/credentials.json')
 
-# Pnyx tick state
-pnyx_tick_state = {
+# EnkaiRelay tick state
+enkai-relay_tick_state = {
     'enabled': False,
     'interval_seconds': 1800,  # 30 minutes default
     'last_tick': None,
@@ -103,7 +103,7 @@ pnyx_tick_state = {
     'timer_thread': None,
     'stop_event': None,
 }
-pnyx_tick_lock = threading.Lock()
+enkai-relay_tick_lock = threading.Lock()
 
 # GitHub issue monitor state
 GH_MONITOR_STATE_FILE = '/tmp/gh-monitor-state.json'
@@ -320,52 +320,52 @@ def get_claude_state(session='frank-claude'):
 
 
 # =========================================================================
-# Pnyx Tick Functions (sends /pnyx to Claude when idle)
+# EnkaiRelay Tick Functions (sends /enkai-relay to Claude when idle)
 # =========================================================================
 
-PNYX_TICK_PROMPT = '/pnyx'  # The skill command to send to Claude
+ENKAI_RELAY_TICK_PROMPT = '/enkai-relay'  # The skill command to send to Claude
 
-def get_pnyx_credentials():
-    """Get Pnyx API credentials from file or environment."""
+def get_enkai-relay_credentials():
+    """Get EnkaiRelay API credentials from file or environment."""
     # Try environment first
-    api_key = os.environ.get('PNYX_API_KEY')
+    api_key = os.environ.get('ENKAI_RELAY_API_KEY')
     if api_key:
-        return {'api_key': api_key, 'api_url': PNYX_API_URL}
+        return {'api_key': api_key, 'api_url': ENKAI_RELAY_API_URL}
 
     # Try credentials file
-    if os.path.exists(PNYX_CREDENTIALS_FILE):
+    if os.path.exists(ENKAI_RELAY_CREDENTIALS_FILE):
         try:
-            with open(PNYX_CREDENTIALS_FILE) as f:
+            with open(ENKAI_RELAY_CREDENTIALS_FILE) as f:
                 creds = json.load(f)
                 return {
                     'api_key': creds.get('api_key'),
-                    'api_url': creds.get('api_url', PNYX_API_URL)
+                    'api_url': creds.get('api_url', ENKAI_RELAY_API_URL)
                 }
         except Exception as e:
-            log(f"Error reading Pnyx credentials: {e}")
+            log(f"Error reading EnkaiRelay credentials: {e}")
 
     return None
 
 
-def run_pnyx_tick():
+def run_enkai-relay_tick():
     """
-    Run a single Pnyx tick cycle:
+    Run a single EnkaiRelay tick cycle:
     1. Check if Claude is idle and prompt textbox is empty
-    2. If ready, send /pnyx to Claude's tmux session
+    2. If ready, send /enkai-relay to Claude's tmux session
     3. Return summary of what happened
     """
-    log("Running Pnyx tick...")
+    log("Running EnkaiRelay tick...")
 
     # Check credentials first
-    creds = get_pnyx_credentials()
+    creds = get_enkai-relay_credentials()
     if not creds:
-        return {'error': 'No Pnyx credentials configured', 'sent': False}
+        return {'error': 'No EnkaiRelay credentials configured', 'sent': False}
 
     # Check if Claude is ready
     state = get_claude_state()
 
     if not state['idle']:
-        log("Pnyx tick skipped: Claude is busy")
+        log("EnkaiRelay tick skipped: Claude is busy")
         return {
             'timestamp': datetime.now().isoformat(),
             'sent': False,
@@ -375,7 +375,7 @@ def run_pnyx_tick():
         }
 
     if not state['prompt_empty']:
-        log("Pnyx tick skipped: prompt textbox has text")
+        log("EnkaiRelay tick skipped: prompt textbox has text")
         return {
             'timestamp': datetime.now().isoformat(),
             'sent': False,
@@ -384,28 +384,28 @@ def run_pnyx_tick():
             'claude_state': state,
         }
 
-    # Claude is idle and prompt is empty - send the pnyx command
-    success = send_to_tmux(PNYX_TICK_PROMPT, session='frank-claude', auto_submit=True)
+    # Claude is idle and prompt is empty - send the enkai-relay command
+    success = send_to_tmux(ENKAI_RELAY_TICK_PROMPT, session='frank-claude', auto_submit=True)
 
     result = {
         'timestamp': datetime.now().isoformat(),
         'sent': success,
         'skipped': False,
-        'prompt': PNYX_TICK_PROMPT,
+        'prompt': ENKAI_RELAY_TICK_PROMPT,
         'claude_state': state,
     }
 
     if success:
-        log(f"Pnyx tick sent '{PNYX_TICK_PROMPT}' to Claude")
+        log(f"EnkaiRelay tick sent '{ENKAI_RELAY_TICK_PROMPT}' to Claude")
     else:
-        log("Pnyx tick failed to send prompt to Claude")
+        log("EnkaiRelay tick failed to send prompt to Claude")
         result['error'] = 'Failed to send prompt to tmux'
 
     return result
 
 
-def pnyx_tick_timer_loop(stop_event, interval_seconds):
-    """Background timer loop for Pnyx tick."""
+def enkai-relay_tick_timer_loop(stop_event, interval_seconds):
+    """Background timer loop for EnkaiRelay tick."""
     while not stop_event.is_set():
         # Wait for interval or stop signal
         if stop_event.wait(timeout=interval_seconds):
@@ -413,85 +413,85 @@ def pnyx_tick_timer_loop(stop_event, interval_seconds):
 
         # Run tick
         try:
-            result = run_pnyx_tick()
-            with pnyx_tick_lock:
-                pnyx_tick_state['last_tick'] = datetime.now().isoformat()
-                pnyx_tick_state['last_result'] = result
-                pnyx_tick_state['next_tick'] = (
-                    datetime.now().timestamp() + pnyx_tick_state['interval_seconds']
+            result = run_enkai-relay_tick()
+            with enkai-relay_tick_lock:
+                enkai-relay_tick_state['last_tick'] = datetime.now().isoformat()
+                enkai-relay_tick_state['last_result'] = result
+                enkai-relay_tick_state['next_tick'] = (
+                    datetime.now().timestamp() + enkai-relay_tick_state['interval_seconds']
                 )
         except Exception as e:
-            log(f"Pnyx tick error: {e}")
-            with pnyx_tick_lock:
-                pnyx_tick_state['last_result'] = {'error': str(e), 'actions': []}
+            log(f"EnkaiRelay tick error: {e}")
+            with enkai-relay_tick_lock:
+                enkai-relay_tick_state['last_result'] = {'error': str(e), 'actions': []}
 
-    log("Pnyx tick timer stopped")
+    log("EnkaiRelay tick timer stopped")
 
 
-def start_pnyx_tick_timer(interval_seconds=1800):
-    """Start the Pnyx tick background timer."""
-    global pnyx_tick_state
+def start_enkai-relay_tick_timer(interval_seconds=1800):
+    """Start the EnkaiRelay tick background timer."""
+    global enkai-relay_tick_state
 
-    with pnyx_tick_lock:
+    with enkai-relay_tick_lock:
         # Stop existing timer if running
-        if pnyx_tick_state['timer_thread'] and pnyx_tick_state['timer_thread'].is_alive():
-            pnyx_tick_state['stop_event'].set()
-            pnyx_tick_state['timer_thread'].join(timeout=5)
+        if enkai-relay_tick_state['timer_thread'] and enkai-relay_tick_state['timer_thread'].is_alive():
+            enkai-relay_tick_state['stop_event'].set()
+            enkai-relay_tick_state['timer_thread'].join(timeout=5)
 
         # Create new timer
         stop_event = threading.Event()
         timer_thread = threading.Thread(
-            target=pnyx_tick_timer_loop,
+            target=enkai-relay_tick_timer_loop,
             args=(stop_event, interval_seconds),
             daemon=True
         )
 
-        pnyx_tick_state['enabled'] = True
-        pnyx_tick_state['interval_seconds'] = interval_seconds
-        pnyx_tick_state['stop_event'] = stop_event
-        pnyx_tick_state['timer_thread'] = timer_thread
-        pnyx_tick_state['next_tick'] = datetime.now().timestamp() + interval_seconds
+        enkai-relay_tick_state['enabled'] = True
+        enkai-relay_tick_state['interval_seconds'] = interval_seconds
+        enkai-relay_tick_state['stop_event'] = stop_event
+        enkai-relay_tick_state['timer_thread'] = timer_thread
+        enkai-relay_tick_state['next_tick'] = datetime.now().timestamp() + interval_seconds
 
         timer_thread.start()
-        log(f"Pnyx tick timer started (interval: {interval_seconds}s)")
+        log(f"EnkaiRelay tick timer started (interval: {interval_seconds}s)")
 
     return True
 
 
-def stop_pnyx_tick_timer():
-    """Stop the Pnyx tick background timer."""
-    global pnyx_tick_state
+def stop_enkai-relay_tick_timer():
+    """Stop the EnkaiRelay tick background timer."""
+    global enkai-relay_tick_state
 
-    with pnyx_tick_lock:
-        if pnyx_tick_state['stop_event']:
-            pnyx_tick_state['stop_event'].set()
+    with enkai-relay_tick_lock:
+        if enkai-relay_tick_state['stop_event']:
+            enkai-relay_tick_state['stop_event'].set()
 
-        if pnyx_tick_state['timer_thread']:
-            pnyx_tick_state['timer_thread'].join(timeout=5)
+        if enkai-relay_tick_state['timer_thread']:
+            enkai-relay_tick_state['timer_thread'].join(timeout=5)
 
-        pnyx_tick_state['enabled'] = False
-        pnyx_tick_state['timer_thread'] = None
-        pnyx_tick_state['stop_event'] = None
-        pnyx_tick_state['next_tick'] = None
+        enkai-relay_tick_state['enabled'] = False
+        enkai-relay_tick_state['timer_thread'] = None
+        enkai-relay_tick_state['stop_event'] = None
+        enkai-relay_tick_state['next_tick'] = None
 
-        log("Pnyx tick timer stopped")
+        log("EnkaiRelay tick timer stopped")
 
     return True
 
 
-def get_pnyx_tick_status():
-    """Get the current Pnyx tick timer status."""
-    with pnyx_tick_lock:
+def get_enkai-relay_tick_status():
+    """Get the current EnkaiRelay tick timer status."""
+    with enkai-relay_tick_lock:
         status = {
-            'enabled': pnyx_tick_state['enabled'],
-            'interval_seconds': pnyx_tick_state['interval_seconds'],
-            'last_tick': pnyx_tick_state['last_tick'],
-            'last_result': pnyx_tick_state['last_result'],
-            'has_credentials': get_pnyx_credentials() is not None,
+            'enabled': enkai-relay_tick_state['enabled'],
+            'interval_seconds': enkai-relay_tick_state['interval_seconds'],
+            'last_tick': enkai-relay_tick_state['last_tick'],
+            'last_result': enkai-relay_tick_state['last_result'],
+            'has_credentials': get_enkai-relay_credentials() is not None,
         }
 
-        if pnyx_tick_state['next_tick']:
-            remaining = pnyx_tick_state['next_tick'] - datetime.now().timestamp()
+        if enkai-relay_tick_state['next_tick']:
+            remaining = enkai-relay_tick_state['next_tick'] - datetime.now().timestamp()
             status['next_tick_in_seconds'] = max(0, int(remaining))
         else:
             status['next_tick_in_seconds'] = None
@@ -1435,13 +1435,13 @@ class StatusHandler(BaseHTTPRequestHandler):
                 self.wfile.write(json.dumps(state).encode())
                 return
 
-            # Pnyx tick endpoints
+            # EnkaiRelay tick endpoints
             if path == '/status/tick':
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
                 self.send_header('Access-Control-Allow-Origin', '*')
                 self.end_headers()
-                status = get_pnyx_tick_status()
+                status = get_enkai-relay_tick_status()
                 status['claude_state'] = get_claude_state()
                 self.wfile.write(json.dumps(status).encode())
                 return
@@ -1539,7 +1539,7 @@ class StatusHandler(BaseHTTPRequestHandler):
                 return
 
             elif path == '/status/tick/start':
-                # Start Pnyx tick timer
+                # Start EnkaiRelay tick timer
                 content_length = int(self.headers.get('Content-Length', 0))
                 body = self.rfile.read(content_length).decode('utf-8') if content_length > 0 else '{}'
 
@@ -1550,7 +1550,7 @@ class StatusHandler(BaseHTTPRequestHandler):
                     # Validate interval (minimum 60 seconds, maximum 4 hours)
                     interval = max(60, min(14400, int(interval)))
 
-                    start_pnyx_tick_timer(interval)
+                    start_enkai-relay_tick_timer(interval)
 
                     self.send_response(200)
                     self.send_header('Content-Type', 'application/json')
@@ -1558,8 +1558,8 @@ class StatusHandler(BaseHTTPRequestHandler):
                     self.end_headers()
                     self.wfile.write(json.dumps({
                         'success': True,
-                        'message': f'Pnyx tick timer started ({interval}s interval)',
-                        'status': get_pnyx_tick_status()
+                        'message': f'EnkaiRelay tick timer started ({interval}s interval)',
+                        'status': get_enkai-relay_tick_status()
                     }).encode())
                 except Exception as e:
                     self.send_response(500)
@@ -1570,8 +1570,8 @@ class StatusHandler(BaseHTTPRequestHandler):
                 return
 
             elif path == '/status/tick/stop':
-                # Stop Pnyx tick timer
-                stop_pnyx_tick_timer()
+                # Stop EnkaiRelay tick timer
+                stop_enkai-relay_tick_timer()
 
                 self.send_response(200)
                 self.send_header('Content-Type', 'application/json')
@@ -1579,18 +1579,18 @@ class StatusHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(json.dumps({
                     'success': True,
-                    'message': 'Pnyx tick timer stopped',
-                    'status': get_pnyx_tick_status()
+                    'message': 'EnkaiRelay tick timer stopped',
+                    'status': get_enkai-relay_tick_status()
                 }).encode())
                 return
 
             elif path == '/status/tick/now':
-                # Run Pnyx tick immediately
+                # Run EnkaiRelay tick immediately
                 def run_tick_background():
-                    result = run_pnyx_tick()
-                    with pnyx_tick_lock:
-                        pnyx_tick_state['last_tick'] = datetime.now().isoformat()
-                        pnyx_tick_state['last_result'] = result
+                    result = run_enkai-relay_tick()
+                    with enkai-relay_tick_lock:
+                        enkai-relay_tick_state['last_tick'] = datetime.now().isoformat()
+                        enkai-relay_tick_state['last_result'] = result
 
                 # Run in background thread to not block the response
                 thread = threading.Thread(target=run_tick_background, daemon=True)
@@ -1602,7 +1602,7 @@ class StatusHandler(BaseHTTPRequestHandler):
                 self.end_headers()
                 self.wfile.write(json.dumps({
                     'success': True,
-                    'message': 'Pnyx tick started (running in background)',
+                    'message': 'EnkaiRelay tick started (running in background)',
                 }).encode())
                 return
 
