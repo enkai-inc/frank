@@ -107,6 +107,16 @@ export class FrankStack extends cdk.Stack {
       actions: ['iam:PutRolePolicy', 'iam:GetRolePolicy'],
       resources: [`arn:aws:iam::${this.account}:role/enkai-relay-*`],
     }));
+    taskRole.addToPrincipalPolicy(new iam.PolicyStatement({
+      actions: [
+        'iam:CreateRole', 'iam:GetRole', 'iam:DeleteRole', 'iam:UpdateRole',
+        'iam:PutRolePolicy', 'iam:GetRolePolicy', 'iam:DeleteRolePolicy',
+        'iam:AttachRolePolicy', 'iam:DetachRolePolicy', 'iam:ListRolePolicies',
+        'iam:ListAttachedRolePolicies', 'iam:TagRole', 'iam:UntagRole',
+        'iam:ListRoleTags',
+      ],
+      resources: [`arn:aws:iam::${this.account}:role/enkai-qualify-*`],
+    }));
 
     // Task Definition
     const taskDefinition = new ecs.FargateTaskDefinition(this, 'FrankTask', {
