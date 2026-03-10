@@ -1817,6 +1817,8 @@ class StatusHandler(BaseHTTPRequestHandler):
                         '.html', '.htm', '.css', '.scss', '.sass', '.less',
                         # Data & query
                         '.sql', '.graphql', '.gql', '.proto',
+                        # Archives
+                        '.zip', '.tar', '.gz', '.tgz',
                         # Other dev files
                         '.diff', '.patch', '.lock', '.dockerfile',
                         '.gitignore', '.editorconfig', '.prettierrc', '.eslintrc',
